@@ -9,6 +9,7 @@ import logger from "../logger";
 import { getStorage } from "../storage";
 import { promises as fs } from "fs";
 import { join } from "path";
+import COS from "cos-nodejs-sdk-v5";
 
 export interface HunyuanVisionRequest {
     imageUrl: string;
@@ -60,7 +61,8 @@ export class HunyuanVisionClient {
      */
     async analyzeImage(request: HunyuanVisionRequest): Promise<HunyuanVisionResponse> {
         try {
-            // Get image URL or Base64 data URL based on storage type
+            // Get image as Base64 data URL for both local and COS storage
+            // Using Base64 is more reliable as it doesn't require public COS bucket access
             let imageUrl: string;
             
             if (request.storageType === "local") {
@@ -68,10 +70,9 @@ export class HunyuanVisionClient {
                 imageUrl = await this.getLocalImageAsBase64(request.imagePath);
                 logger.info("Using Base64 encoded image for local storage");
             } else {
-                // For COS storage, use the public URL
-                const storage = getStorage();
-                imageUrl = await storage.getUrl(request.imagePath);
-                logger.info("Using COS URL for image", { imageUrl });
+                // For COS storage, download the file and convert to Base64
+                imageUrl = await this.getCosImageAsBase64(request.imagePath);
+                logger.info("Using Base64 encoded image for COS storage");
             }
 
             // Construct prompt for "毒舌摄影师" style evaluation
@@ -168,7 +169,54 @@ export class HunyuanVisionClient {
     private async getLocalImageAsBase64(imagePath: string): Promise<string> {
         const fullPath = join("uploads", imagePath);
         const fileBuffer = await fs.readFile(fullPath);
-        const base64Data = fileBuffer.toString("base64");
+        return this.bufferToBase64DataUrl(fileBuffer, imagePath);
+    }
+
+    /**
+     * Download COS image and convert to Base64 data URL
+     */
+    private async getCosImageAsBase64(imagePath: string): Promise<string> {
+        const secretId = process.env.TENCENT_CLOUD_SECRET_ID;
+        const secretKey = process.env.TENCENT_CLOUD_SECRET_KEY;
+        const region = process.env.COS_REGION || "ap-beijing";
+        const bucket = process.env.COS_BUCKET_NAME;
+
+        if (!secretId || !secretKey || !bucket) {
+            throw new Error("COS credentials not configured");
+        }
+
+        const cos = new COS({
+            SecretId: secretId,
+            SecretKey: secretKey,
+        });
+
+        return new Promise((resolve, reject) => {
+            cos.getObject(
+                {
+                    Bucket: bucket,
+                    Region: region,
+                    Key: imagePath,
+                },
+                (err, data) => {
+                    if (err) {
+                        logger.error("Failed to download image from COS:", err);
+                        reject(err);
+                        return;
+                    }
+
+                    const fileBuffer = data.Body as Buffer;
+                    const base64DataUrl = this.bufferToBase64DataUrl(fileBuffer, imagePath);
+                    resolve(base64DataUrl);
+                }
+            );
+        });
+    }
+
+    /**
+     * Convert buffer to Base64 data URL
+     */
+    private bufferToBase64DataUrl(buffer: Buffer, imagePath: string): string {
+        const base64Data = buffer.toString("base64");
         
         // Determine MIME type from file extension
         const ext = imagePath.split(".").pop()?.toLowerCase() || "jpeg";
