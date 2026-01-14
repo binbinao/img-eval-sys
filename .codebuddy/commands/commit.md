@@ -1,0 +1,1 @@
+执行合并分支到main或master分支，然后执行 git commit 命令，并自动补齐提交信息。
