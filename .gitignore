@@ -44,3 +44,28 @@ next-env.d.ts
 
 # Docker
 docker-compose.override.yml
+
+# Uploads (user uploaded files)
+/uploads
+
+# AI/Editor rules
+.clinerules
+.codebuddy
+.cursor
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# Test files
+/tests
+jest.config.js
+jest.setup.js
+
+# OpenAPI spec (development only)
+/openspec
+
+# Sentry config (if not used in production)
+sentry.*.config.ts
+
+# Development scripts
+/scripts
