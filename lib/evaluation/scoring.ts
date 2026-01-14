@@ -26,24 +26,44 @@ export function extractScores(analysis: string): ScoreExtractionResult {
     };
 
     try {
-        // Pattern 1: Look for explicit score mentions like "构图: 8分" or "构图 8/10"
+        // Pattern 1: Look for explicit score mentions like "构图: 2分" or "**构图**: 2分 - xxx"
+        // Support various bullet points (•, *, -, ·) and markdown bold formatting
+        // The key pattern is: [bullet]? [**]?[keyword][**]?: [number]分
         const explicitPatterns = [
-            { key: "composition", patterns: [/构图[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /构图\s*(\d+(?:\.\d+)?)\s*[分/]?10?/i] },
-            { key: "technicalQuality", patterns: [/技术质量[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /技术[质量]?[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /技术[质量]?\s*(\d+(?:\.\d+)?)\s*[分/]?10?/i] },
-            { key: "artisticMerit", patterns: [/艺术价值[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /艺术[价值]?[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /艺术[价值]?\s*(\d+(?:\.\d+)?)\s*[分/]?10?/i] },
-            { key: "lighting", patterns: [/光线[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /光线\s*(\d+(?:\.\d+)?)\s*[分/]?10?/i] },
-            { key: "subjectMatter", patterns: [/主体[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /主体\s*(\d+(?:\.\d+)?)\s*[分/]?10?/i] },
-            { key: "postProcessing", patterns: [/后期处理[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /后期[处理]?[：:]\s*(\d+(?:\.\d+)?)\s*分?/i, /后期[处理]?\s*(\d+(?:\.\d+)?)\s*[分/]?10?/i] },
+            { key: "composition", patterns: [
+                /\*{0,2}构图\*{0,2}[：:]\s*(\d+(?:\.\d+)?)\s*分/,
+            ] },
+            { key: "technicalQuality", patterns: [
+                /\*{0,2}技术质量\*{0,2}[：:]\s*(\d+(?:\.\d+)?)\s*分/,
+            ] },
+            { key: "artisticMerit", patterns: [
+                /\*{0,2}艺术价值\*{0,2}[：:]\s*(\d+(?:\.\d+)?)\s*分/,
+            ] },
+            { key: "lighting", patterns: [
+                /\*{0,2}光线\*{0,2}[：:]\s*(\d+(?:\.\d+)?)\s*分/,
+            ] },
+            { key: "subjectMatter", patterns: [
+                /\*{0,2}主体\*{0,2}[：:]\s*(\d+(?:\.\d+)?)\s*分/,
+            ] },
+            { key: "postProcessing", patterns: [
+                /\*{0,2}后期处理\*{0,2}[：:]\s*(\d+(?:\.\d+)?)\s*分/,
+                /\*{0,2}后期\*{0,2}[：:]\s*(\d+(?:\.\d+)?)\s*分/,
+            ] },
             // Note: overall is always calculated from individual scores, not extracted from text
         ];
+        
+        // Log the analysis text for debugging
+        logger.info("Analyzing text for scores extraction", { analysisLength: analysis.length, analysisSample: analysis.substring(0, 500) });
 
         for (const { key, patterns } of explicitPatterns) {
             for (const pattern of patterns) {
                 const match = analysis.match(pattern);
+                logger.debug("Pattern matching attempt", { key, pattern: pattern.toString(), matched: !!match, matchValue: match ? match[1] : null });
                 if (match && match[1]) {
                     const score = parseFloat(match[1]);
                     if (score >= 1 && score <= 10) {
                         scores[key as keyof ScoreExtractionResult] = Math.round(score * 10) / 10;
+                        logger.info("Score extracted", { key, score: scores[key as keyof ScoreExtractionResult] });
                         break;
                     }
                 }
