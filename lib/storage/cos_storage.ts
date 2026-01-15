@@ -75,7 +75,7 @@ export class CosStorage implements IStorage {
 
                     resolve({
                         path: key,
-                        url: this.getCosUrl(key),
+                        url: `/api/files/cos/${key}`,
                         storageType: "cos",
                     });
                 }
@@ -106,14 +106,40 @@ export class CosStorage implements IStorage {
     }
 
     async getUrl(path: string): Promise<string> {
-        return this.getCosUrl(path);
+        // Return proxy API URL instead of direct COS URL
+        // This ensures images can be accessed without public COS bucket permissions
+        return `/api/files/cos/${path}`;
     }
 
     /**
-     * Generate COS URL
+     * Get COS file as Buffer
+     * Used by the file serving API to proxy COS files
      */
-    private getCosUrl(key: string): string {
-        // Generate COS URL
+    async getBuffer(path: string): Promise<Buffer> {
+        return new Promise((resolve, reject) => {
+            this.cos.getObject(
+                {
+                    Bucket: this.bucket,
+                    Region: this.region,
+                    Key: path,
+                },
+                (err, data) => {
+                    if (err) {
+                        logger.error(`Error getting file from COS: ${path}`, err);
+                        reject(err);
+                        return;
+                    }
+
+                    resolve(data.Body as Buffer);
+                }
+            );
+        });
+    }
+
+    /**
+     * Generate direct COS URL (for internal use only)
+     */
+    getDirectUrl(key: string): string {
         // Format: https://<bucket>.cos.<region>.myqcloud.com/<key>
         return `https://${this.bucket}.cos.${this.region}.myqcloud.com/${key}`;
     }
