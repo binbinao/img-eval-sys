@@ -76,9 +76,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 return;
             }
 
-            // Redirect to home page on success
-            router.push("/");
-            router.refresh();
+            // Redirect to home page on success using full page reload
+            // This ensures session cookies are properly recognized by the client
+            window.location.href = "/";
         } catch (err) {
             setError("网络错误，请稍后重试");
         } finally {

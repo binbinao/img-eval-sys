@@ -16,7 +16,8 @@ export default function Navbar() {
             if (response.ok) {
                 const data = await response.json();
                 setIsAuthenticated(true);
-                setUserEmail(data.email);
+                // API returns {user: {email: "..."}} structure
+                setUserEmail(data.user?.email || data.email || "");
             } else {
                 setIsAuthenticated(false);
                 setUserEmail("");
@@ -48,7 +49,7 @@ export default function Navbar() {
         <nav className="navbar">
             <div className="navbar-content">
                 <Link href="/" className="navbar-brand">
-                    毒舌摄影师辣评
+                    🎭 毒舌摄影师辣评
                 </Link>
 
                 <div className="navbar-right">
@@ -116,8 +117,12 @@ export default function Navbar() {
                 }
 
                 .user-email {
-                    color: var(--secondary);
+                    color: var(--dark);
                     font-size: 14px;
+                    font-weight: 500;
+                    padding: 4px 10px;
+                    background: var(--light);
+                    border-radius: 4px;
                 }
 
                 :global(.btn-sm) {

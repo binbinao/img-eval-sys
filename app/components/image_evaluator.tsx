@@ -2,6 +2,8 @@
 
 import { useState, useRef, DragEvent, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import Link from "next/link";
 import ScoreDisplay from "./score_display";
 
 interface EvaluationData {
@@ -22,7 +24,69 @@ interface EvaluationData {
     updatedAt: string;
 }
 
+// App introduction markdown content
+const APP_INTRODUCTION = `# 🎭 毒舌摄影师辣评
+
+> **"毒舌是最高级的关爱"** —— 让你的每一张照片都值得被认真对待！
+
+---
+
+## ✨ 这是什么？
+
+**毒舌摄影师辣评**是一款基于 AI 视觉技术的专业摄影评价系统。我们请来了一位"业界闻名"的**毒舌摄影评论官**——拥有30年横跨商业与艺术领域的摄影经验，以眼光毒辣、言辞犀利、幽默刻薄著称。
+
+面对惊艳之作，他会不吝啬用最浮夸的修辞来赞美；而面对平庸或失败之作，他的吐槽将如同手术刀般精准且充满戏剧性——旨在让你在一阵脸红耳赤后又能若有所思。
+
+---
+
+## 🎯 六大专业评分维度
+
+我们从以下六个专业角度对你的摄影作品进行深度剖析：
+
+| 维度 | 说明 |
+|------|------|
+| 📐 **构图** | 画面布局是否和谐？主体位置是否得当？ |
+| 🔧 **技术质量** | 清晰度、曝光、色彩等基础技术是否扎实？ |
+| 🎨 **艺术价值** | 作品的创意和情感表达是否打动人心？ |
+| 💡 **光线** | 光线运用是塑造了神性轮廓还是制造了混乱？ |
+| 🎯 **主体** | 主体表现是鹤立鸡群还是完美融入背景？ |
+| 🖌️ **后期处理** | 后期是锦上添花还是灾难级的粉饰太平？ |
+
+---
+
+## 🌟 核心特性
+
+### 🗡️ 毒舌风格评价
+- **当头一棒**：极具个性的开场白，好照片赞美得让人心花怒放，差照片吐槽得让人无地自容却不失幽默
+- **毒舌显微镜**：专业观点包裹在犀利金句中，一针见血的深度剖析
+- **求生指南**：毒舌口吻下的真诚改进建议
+- **最终判决**：宣判式的严厉评分和毒舌短评
+
+### 🤖 AI 驱动的专业分析
+- 基于腾讯云混元视觉大模型
+- 30年摄影经验浓缩的专业评判标准
+- 1-10分严格评分体系
+
+---
+
+## 📖 如何使用
+
+1. **注册/登录** —— 创建你的账户
+2. **上传图片** —— 拖拽或点击选择你的摄影作品
+3. **点击"毒舌辣评"** —— 等待 AI 摄影师审阅
+4. **接受审判** —— 查看专业评分和犀利点评
+
+---
+
+**准备好接受毒舌摄影师的审判了吗？登录后上传你的第一张作品！**
+
+*📷 愿你的每一次快门都值得被毒舌 📷*
+`;
+
 export default function ImageEvaluator() {
+    // Auth state
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
     // Upload state
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -35,6 +99,19 @@ export default function ImageEvaluator() {
     const [evaluationId, setEvaluationId] = useState<number | null>(null);
     const [evaluation, setEvaluation] = useState<EvaluationData | null>(null);
     const [processing, setProcessing] = useState(false);
+
+    // Check authentication on mount
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const response = await fetch("/api/auth/me");
+                setIsAuthenticated(response.ok);
+            } catch {
+                setIsAuthenticated(false);
+            }
+        };
+        checkAuth();
+    }, []);
 
     // File selection handler
     const handleFileSelect = (selectedFile: File) => {
@@ -190,126 +267,298 @@ export default function ImageEvaluator() {
         return "var(--danger)";
     };
 
-    return (
-        <div className="evaluator-vertical">
-            {/* Upload Section */}
-            <div className="evaluator-section">
-                <div className="section-header">
-                    <h2>上传图片</h2>
+    // Show loading while checking auth
+    if (isAuthenticated === null) {
+        return (
+            <div className="evaluator-container">
+                <div className="loading-state">
+                    <div className="spinner" />
+                    <p>加载中...</p>
                 </div>
-                <div className="section-content">
-                    <div
-                        className={`upload-zone ${isDragging ? "dragging" : ""} ${preview ? "has-preview" : ""}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={() => !preview && fileInputRef.current?.click()}
-                    >
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/jpg,image/png,image/webp,image/tiff"
-                            onChange={handleFileInputChange}
-                            style={{ display: "none" }}
-                        />
+                <style jsx>{`
+                    .evaluator-container {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        min-height: 400px;
+                    }
+                    .loading-state {
+                        text-align: center;
+                        color: var(--secondary);
+                    }
+                `}</style>
+            </div>
+        );
+    }
 
-                        {preview ? (
-                            <div className="preview-container">
-                                <img src={preview} alt="Preview" className="preview-image" />
-                                <div className="preview-info">
-                                    <p className="file-name">{file?.name}</p>
-                                    <p className="file-size">
-                                        {((file?.size || 0) / 1024 / 1024).toFixed(2)} MB
-                                    </p>
+    // Show introduction when not authenticated
+    if (!isAuthenticated) {
+        return (
+            <div className="intro-container">
+                <div className="intro-content">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{APP_INTRODUCTION}</ReactMarkdown>
+                    <div className="intro-actions">
+                        <Link href="/login" className="intro-btn intro-btn-primary">
+                            立即登录
+                        </Link>
+                        <Link href="/register" className="intro-btn intro-btn-secondary">
+                            注册账户
+                        </Link>
+                    </div>
+                </div>
+                <style jsx global>{`
+                    .intro-container {
+                        max-width: 900px;
+                        margin: 0 auto;
+                    }
+                    .intro-content {
+                        background: var(--white);
+                        border-radius: var(--border-radius);
+                        box-shadow: var(--shadow);
+                        padding: 40px;
+                    }
+                    .intro-content h1 {
+                        font-size: 32px;
+                        margin-bottom: 15px;
+                        text-align: center;
+                    }
+                    .intro-content blockquote {
+                        background: var(--light);
+                        border-left: 4px solid var(--primary);
+                        padding: 15px 20px;
+                        margin: 20px 0;
+                        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+                        font-style: italic;
+                    }
+                    .intro-content h2 {
+                        font-size: 22px;
+                        margin: 30px 0 15px 0;
+                        color: var(--dark);
+                    }
+                    .intro-content h3 {
+                        font-size: 18px;
+                        margin: 20px 0 10px 0;
+                        color: var(--dark);
+                    }
+                    .intro-content table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 15px 0;
+                    }
+                    .intro-content th,
+                    .intro-content td {
+                        padding: 12px 15px;
+                        border: 1px solid var(--border);
+                        text-align: left;
+                    }
+                    .intro-content th {
+                        background: var(--light);
+                        font-weight: 600;
+                    }
+                    .intro-content tr:nth-child(even) {
+                        background: var(--light);
+                    }
+                    .intro-content ul,
+                    .intro-content ol {
+                        padding-left: 25px;
+                        margin: 10px 0;
+                    }
+                    .intro-content li {
+                        margin: 8px 0;
+                        line-height: 1.6;
+                    }
+                    .intro-content hr {
+                        border: none;
+                        border-top: 1px solid var(--border);
+                        margin: 25px 0;
+                    }
+                    .intro-content strong {
+                        color: var(--primary);
+                    }
+                    .intro-content em {
+                        color: var(--secondary);
+                    }
+                    .intro-content p {
+                        line-height: 1.8;
+                        margin: 10px 0;
+                    }
+                    .intro-actions {
+                        display: flex;
+                        gap: 15px;
+                        justify-content: center;
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid var(--border);
+                    }
+                    .intro-btn {
+                        display: inline-block;
+                        padding: 12px 30px;
+                        font-size: 16px;
+                        border-radius: var(--border-radius);
+                        text-decoration: none;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-weight: 500;
+                    }
+                    .intro-btn-primary {
+                        background-color: var(--primary);
+                        color: var(--white);
+                    }
+                    .intro-btn-primary:hover {
+                        background-color: var(--primary-hover);
+                    }
+                    .intro-btn-secondary {
+                        background-color: var(--secondary);
+                        color: var(--white);
+                    }
+                    .intro-btn-secondary:hover {
+                        background-color: #5a6268;
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    return (
+        <div className="evaluator-container">
+            {/* Top Section: Upload and Scores side by side */}
+            <div className="top-section">
+                {/* Left: Upload Section */}
+                <div className="evaluator-section upload-section">
+                    <div className="section-header">
+                        <h2>上传图片</h2>
+                    </div>
+                    <div className="section-content">
+                        <div
+                            className={`upload-zone ${isDragging ? "dragging" : ""} ${preview ? "has-preview" : ""}`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => !preview && fileInputRef.current?.click()}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png,image/webp,image/tiff"
+                                onChange={handleFileInputChange}
+                                style={{ display: "none" }}
+                            />
+
+                            {preview ? (
+                                <div className="preview-container">
+                                    <img src={preview} alt="Preview" className="preview-image" />
+                                    <div className="preview-info">
+                                        <p className="file-name">{file?.name}</p>
+                                        <p className="file-size">
+                                            {((file?.size || 0) / 1024 / 1024).toFixed(2)} MB
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="upload-placeholder">
+                                    <div className="upload-icon">📷</div>
+                                    <p className="upload-text">拖拽图片到这里</p>
+                                    <p className="upload-hint">或点击选择文件</p>
+                                    <p className="upload-formats">支持 JPEG, PNG, WebP, TIFF，最大 10MB</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {error && <div className="error-message">{error}</div>}
+
+                        <div className="button-group">
+                            {preview && (
+                                <>
+                                    <button onClick={handleClear} className="btn btn-secondary">
+                                        清除
+                                    </button>
+                                    <button
+                                        onClick={handleUpload}
+                                        className="btn btn-primary"
+                                        disabled={uploading || processing}
+                                    >
+                                        {uploading ? "上传中..." : processing ? "处理中..." : "毒舌辣评"}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: Scores Section */}
+                <div className="evaluator-section scores-section">
+                    <div className="section-header">
+                        <h2>评分结果</h2>
+                    </div>
+                    <div className="section-content">
+                        {processing ? (
+                            <div className="processing-state">
+                                <div className="spinner" />
+                                <p className="processing-text">AI 正在分析您的图片...</p>
+                                <p className="processing-hint">请稍候，这可能需要几秒钟</p>
+                            </div>
+                        ) : evaluation && evaluation.status !== "failed" ? (
+                            <div className="scores-content">
+                                {/* Overall Score */}
+                                <div className="overall-score">
+                                    <span className="score-label">总体评分</span>
+                                    <span
+                                        className="score-value"
+                                        style={{ color: getScoreColor(evaluation.scores.overall) }}
+                                    >
+                                        {evaluation.scores.overall.toFixed(1)}
+                                    </span>
+                                    <span className="score-max">/ 10</span>
+                                </div>
+
+                                {/* Category Scores */}
+                                <div className="category-scores">
+                                    <ScoreDisplay label="构图" score={evaluation.scores.composition} />
+                                    <ScoreDisplay label="技术质量" score={evaluation.scores.technicalQuality} />
+                                    <ScoreDisplay label="艺术价值" score={evaluation.scores.artisticMerit} />
+                                    <ScoreDisplay label="光线" score={evaluation.scores.lighting} />
+                                    <ScoreDisplay label="主体" score={evaluation.scores.subjectMatter} />
+                                    <ScoreDisplay label="后期处理" score={evaluation.scores.postProcessing} />
                                 </div>
                             </div>
-                        ) : (
-                            <div className="upload-placeholder">
-                                <div className="upload-icon">📷</div>
-                                <p className="upload-text">拖拽图片到这里</p>
-                                <p className="upload-hint">或点击选择文件</p>
-                                <p className="upload-formats">支持 JPEG, PNG, WebP, TIFF，最大 10MB</p>
+                        ) : evaluation && evaluation.status === "failed" ? (
+                            <div className="error-state">
+                                <p>评估失败，请重试</p>
                             </div>
-                        )}
-                    </div>
-
-                    {error && <div className="error-message">{error}</div>}
-
-                    <div className="button-group">
-                        {preview && (
-                            <>
-                                <button onClick={handleClear} className="btn btn-secondary">
-                                    清除
-                                </button>
-                                <button
-                                    onClick={handleUpload}
-                                    className="btn btn-primary"
-                                    disabled={uploading || processing}
-                                >
-                                    {uploading ? "上传中..." : processing ? "处理中..." : "毒舌辣评"}
-                                </button>
-                            </>
+                        ) : (
+                            <div className="empty-state">
+                                <div className="empty-icon">📊</div>
+                                <p className="empty-text">评分结果将显示在这里</p>
+                                <p className="empty-hint">请先上传图片并开始评估</p>
+                            </div>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Results Section */}
-            <div className="evaluator-section">
+            {/* Bottom Section: Professional Review */}
+            <div className="evaluator-section review-section">
                 <div className="section-header">
-                    <h2>评价结果</h2>
+                    <h2>专业评价</h2>
                 </div>
                 <div className="section-content">
                     {processing ? (
                         <div className="processing-state">
                             <div className="spinner" />
-                            <p className="processing-text">AI 正在分析您的图片...</p>
-                            <p className="processing-hint">请稍候，这可能需要几秒钟</p>
+                            <p className="processing-text">正在生成专业评价...</p>
                         </div>
-                    ) : evaluation ? (
-                        <div className="result-content">
-                            {evaluation.status === "failed" ? (
-                                <div className="error-state">
-                                    <p>评估失败，请重试</p>
-                                </div>
-                            ) : (
-                                <div className="result-grid">
-                                    {/* Overall Score */}
-                                    <div className="overall-score">
-                                        <span className="score-label">总体评分</span>
-                                        <span
-                                            className="score-value"
-                                            style={{ color: getScoreColor(evaluation.scores.overall) }}
-                                        >
-                                            {evaluation.scores.overall.toFixed(1)}
-                                        </span>
-                                        <span className="score-max">/ 10</span>
-                                    </div>
-
-                                    {/* Category Scores */}
-                                    <div className="category-scores">
-                                        <ScoreDisplay label="构图" score={evaluation.scores.composition} />
-                                        <ScoreDisplay label="技术质量" score={evaluation.scores.technicalQuality} />
-                                        <ScoreDisplay label="艺术价值" score={evaluation.scores.artisticMerit} />
-                                        <ScoreDisplay label="光线" score={evaluation.scores.lighting} />
-                                        <ScoreDisplay label="主体" score={evaluation.scores.subjectMatter} />
-                                        <ScoreDisplay label="后期处理" score={evaluation.scores.postProcessing} />
-                                    </div>
-
-                                    {/* Summary */}
-                                    <div className="summary-section">
-                                        <h3>专业评价</h3>
-                                        <div className="markdown-content">
-                                            <ReactMarkdown>{evaluation.summary}</ReactMarkdown>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                    ) : evaluation && evaluation.status !== "failed" ? (
+                        <div className="markdown-content">
+                            <ReactMarkdown>{evaluation.summary}</ReactMarkdown>
+                        </div>
+                    ) : evaluation && evaluation.status === "failed" ? (
+                        <div className="error-state">
+                            <p>评估失败，请重试</p>
                         </div>
                     ) : (
                         <div className="empty-state">
-                            <div className="empty-icon">📊</div>
-                            <p className="empty-text">评价结果将显示在这里</p>
+                            <div className="empty-icon">📝</div>
+                            <p className="empty-text">专业评价将显示在这里</p>
                             <p className="empty-hint">请先上传图片并开始评估</p>
                         </div>
                     )}
@@ -317,10 +566,22 @@ export default function ImageEvaluator() {
             </div>
 
             <style jsx>{`
-                .evaluator-vertical {
+                .evaluator-container {
                     display: flex;
                     flex-direction: column;
                     gap: 20px;
+                }
+
+                .top-section {
+                    display: grid;
+                    grid-template-columns: 35% 65%;
+                    gap: 20px;
+                }
+
+                @media (max-width: 900px) {
+                    .top-section {
+                        grid-template-columns: 1fr;
+                    }
                 }
 
                 .evaluator-section {
@@ -328,6 +589,26 @@ export default function ImageEvaluator() {
                     border-radius: var(--border-radius);
                     box-shadow: var(--shadow);
                     overflow: hidden;
+                }
+
+                .upload-section {
+                    min-height: 504px;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .scores-section {
+                    min-height: 504px;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .upload-section .section-content,
+                .scores-section .section-content {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
                 }
 
                 .section-header {
@@ -353,7 +634,7 @@ export default function ImageEvaluator() {
                     text-align: center;
                     cursor: pointer;
                     transition: all 0.3s ease;
-                    min-height: 200px;
+                    flex: 1;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -406,7 +687,7 @@ export default function ImageEvaluator() {
 
                 .preview-image {
                     max-width: 100%;
-                    max-height: 300px;
+                    max-height: 250px;
                     border-radius: var(--border-radius);
                     box-shadow: var(--shadow);
                 }
@@ -443,6 +724,7 @@ export default function ImageEvaluator() {
                     text-align: center;
                     color: var(--secondary);
                     padding: 40px 20px;
+                    min-height: 200px;
                 }
 
                 .empty-icon {
@@ -472,26 +754,15 @@ export default function ImageEvaluator() {
                     font-size: 14px;
                 }
 
-                .result-content {
-                    width: 100%;
-                }
-
-                .result-grid {
-                    display: grid;
-                    grid-template-columns: auto 1fr;
+                .scores-content {
+                    display: flex;
+                    flex-direction: column;
                     gap: 20px;
-                    align-items: start;
-                }
-
-                @media (max-width: 768px) {
-                    .result-grid {
-                        grid-template-columns: 1fr;
-                    }
                 }
 
                 .overall-score {
                     text-align: center;
-                    padding: 20px 30px;
+                    padding: 20px;
                     background: var(--light);
                     border-radius: var(--border-radius);
                 }
@@ -516,25 +787,13 @@ export default function ImageEvaluator() {
                 }
 
                 .category-scores {
-                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
                 }
 
-                .summary-section {
-                    grid-column: 1 / -1;
-                    background: var(--light);
-                    padding: 15px;
-                    border-radius: var(--border-radius);
-                }
-
-                .summary-section h3 {
-                    font-size: 14px;
-                    margin-bottom: 10px;
-                    color: var(--secondary);
-                }
-
-                .summary-section p {
-                    line-height: 1.6;
-                    color: var(--dark);
+                .review-section {
+                    min-height: 504px;
                 }
 
                 .markdown-content {

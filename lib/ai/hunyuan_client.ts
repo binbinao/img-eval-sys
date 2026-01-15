@@ -33,7 +33,7 @@ export class HunyuanVisionClient {
     constructor() {
         const secretId = process.env.TENCENT_CLOUD_SECRET_ID;
         const secretKey = process.env.TENCENT_CLOUD_SECRET_KEY;
-        const region = process.env.TENCENT_CLOUD_REGION || "ap-beijing";
+        const region = process.env.TENCENT_CLOUD_REGION || "ap-shanghai";
 
         if (!secretId || !secretKey) {
             throw new Error(
@@ -140,8 +140,20 @@ export class HunyuanVisionClient {
                 },
             ];
 
+            /**
+             * Available Hunyuan Models (Vision-capable):
+             *   - hunyuan-vision        : Standard vision model, good balance of performance and cost
+             *   - hunyuan-turbo-vision  : Faster vision model with lower latency
+             *   - hunyuan-pro           : Advanced model with enhanced capabilities
+             * Text-only models (NOT for image evaluation):
+             *   - hunyuan-turbo         : Fast general model
+             *   - hunyuan-lite          : Lightweight model for simple tasks
+             *   - hunyuan-standard      : Standard general model
+             */
+            const model = process.env.HUNYUAN_MODEL || "hunyuan-vision";
+            
             const apiRequest: ChatCompletionsRequest = {
-                Model: "hunyuan-vision",
+                Model: model,
                 Messages: messages,
                 Stream: false,
             };
@@ -178,7 +190,7 @@ export class HunyuanVisionClient {
     private async getCosImageAsBase64(imagePath: string): Promise<string> {
         const secretId = process.env.TENCENT_CLOUD_SECRET_ID;
         const secretKey = process.env.TENCENT_CLOUD_SECRET_KEY;
-        const region = process.env.COS_REGION || "ap-beijing";
+        const region = process.env.COS_REGION || "ap-shanghai";
         const bucket = process.env.COS_BUCKET_NAME;
 
         if (!secretId || !secretKey || !bucket) {

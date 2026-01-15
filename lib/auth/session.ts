@@ -2,11 +2,17 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { SessionData } from "@/types/session";
 
+// Determine if cookie should be secure
+// Use COOKIE_SECURE env var to override, useful for HTTP-only environments like DevCloud
+const isSecure = process.env.COOKIE_SECURE !== undefined 
+    ? process.env.COOKIE_SECURE === "true" 
+    : process.env.NODE_ENV === "production";
+
 const sessionOptions = {
     password: process.env.SESSION_SECRET || "change-this-secret-key-in-production-min-32-chars",
     cookieName: "image-evaluation-session",
     cookieOptions: {
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecure,
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 7, // 7 days
         sameSite: "lax" as const,

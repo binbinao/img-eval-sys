@@ -110,7 +110,7 @@ export default function ImageUpload() {
     };
 
     return (
-        <div className="card">
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <h2 style={{ marginBottom: "20px" }}>上传图片</h2>
 
             <div
@@ -125,6 +125,12 @@ export default function ImageUpload() {
                     cursor: "pointer",
                     backgroundColor: isDragging ? "rgba(0, 112, 243, 0.05)" : "transparent",
                     transition: "all 0.3s ease",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: "380px",
                 }}
                 onClick={() => fileInputRef.current?.click()}
             >
@@ -174,9 +180,13 @@ export default function ImageUpload() {
                         </button>
                     </div>
                 ) : (
-                    <div>
-                        <p style={{ fontSize: "18px", marginBottom: "10px" }}>
-                            拖拽图片到这里或点击选择
+                    <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "48px", marginBottom: "20px" }}>📷</div>
+                        <p style={{ fontSize: "20px", marginBottom: "10px", fontWeight: 500 }}>
+                            拖拽图片到这里
+                        </p>
+                        <p style={{ color: "var(--secondary)", fontSize: "16px", marginBottom: "15px" }}>
+                            或点击选择文件
                         </p>
                         <p style={{ color: "var(--secondary)", fontSize: "14px" }}>
                             支持 JPEG, PNG, WebP, TIFF，最大 10MB
