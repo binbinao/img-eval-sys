@@ -41,6 +41,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Check if user is active
+        if (!user.is_active) {
+            logger.warn("Login attempt with disabled account", { userId: user.id, email: user.email });
+            return NextResponse.json(
+                { error: "Your account has been disabled. Please contact the administrator." },
+                { status: 403 }
+            );
+        }
+
         // Create session
         await createSession(user.id, user.email);
 

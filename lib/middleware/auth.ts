@@ -24,6 +24,26 @@ export async function requireAuth(
             };
         }
 
+        // Check if user is still active (this prevents disabled users from using existing sessions)
+        const { userRepository } = await import("../repositories");
+        const user = await userRepository.findById(session.userId);
+        
+        if (!user || !user.is_active) {
+            logger.warn("Access attempt with disabled or non-existent user", {
+                path: request.nextUrl.pathname,
+                userId: session.userId,
+            });
+            // Destroy the invalid session
+            await session.destroy();
+            return {
+                authenticated: false,
+                response: NextResponse.json(
+                    { error: "你的账号已经被禁用，请联系管理员处理。" },
+                    { status: 403 }
+                ),
+            };
+        }
+
         return {
             authenticated: true,
             userId: session.userId,
