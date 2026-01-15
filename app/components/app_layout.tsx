@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./sidebar";
+import type { UserRole } from "@/types/database";
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -11,13 +12,22 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
     const pathname = usePathname();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userRole, setUserRole] = useState<UserRole | undefined>(undefined);
 
     const checkAuth = useCallback(async () => {
         try {
             const response = await fetch("/api/auth/me");
-            setIsAuthenticated(response.ok);
+            if (response.ok) {
+                const data = await response.json();
+                setIsAuthenticated(true);
+                setUserRole(data.user?.role);
+            } else {
+                setIsAuthenticated(false);
+                setUserRole(undefined);
+            }
         } catch {
             setIsAuthenticated(false);
+            setUserRole(undefined);
         }
     }, []);
 
@@ -34,7 +44,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
     return (
         <div className="app-container">
-            <Sidebar isAuthenticated={isAuthenticated} />
+            <Sidebar isAuthenticated={isAuthenticated} userRole={userRole} />
             <main className="main-content">{children}</main>
 
             <style jsx>{`

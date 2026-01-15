@@ -55,6 +55,14 @@ export async function runMigrations(): Promise<void> {
                 "utf-8"
             ),
         },
+        {
+            id: "004",
+            name: "add_user_role",
+            sql: readFileSync(
+                join(process.cwd(), "migrations", "004_add_user_role.sql"),
+                "utf-8"
+            ),
+        },
     ];
 
     // Execute pending migrations
@@ -66,7 +74,26 @@ export async function runMigrations(): Promise<void> {
 
         try {
             logger.info(`Executing migration ${migration.id}: ${migration.name}`);
-            await query(migration.sql);
+            
+            // Split SQL by semicolon and execute each statement separately
+            const statements = migration.sql
+                .split(';')
+                .map(stmt => stmt.trim())
+                .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+            
+            for (const statement of statements) {
+                // Skip pure comment lines
+                const cleanedStatement = statement
+                    .split('\n')
+                    .filter(line => !line.trim().startsWith('--'))
+                    .join('\n')
+                    .trim();
+                
+                if (cleanedStatement.length > 0) {
+                    await query(cleanedStatement);
+                }
+            }
+            
             await query(
                 "INSERT INTO migrations (id, name) VALUES (?, ?)",
                 [migration.id, migration.name]

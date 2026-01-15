@@ -1,5 +1,5 @@
 import { query, getPool } from "../db/connection";
-import type { User, CreateUserInput } from "@/types/database";
+import type { User, CreateUserInput, UserRole } from "@/types/database";
 import type { ResultSetHeader } from "mysql2";
 
 export class UserRepository {
@@ -59,6 +59,61 @@ export class UserRepository {
             [email]
         );
         return users[0].count > 0;
+    }
+
+    /**
+     * Get all users (for admin)
+     */
+    async findAll(): Promise<User[]> {
+        return await query<User>(
+            "SELECT id, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC"
+        );
+    }
+
+    /**
+     * Update user role
+     */
+    async updateRole(userId: number, role: UserRole): Promise<User | null> {
+        const pool = getPool();
+        await pool.execute(
+            "UPDATE users SET role = ? WHERE id = ?",
+            [role, userId]
+        );
+        return await this.findById(userId);
+    }
+
+    /**
+     * Check if user is admin
+     */
+    async isAdmin(userId: number): Promise<boolean> {
+        const users = await query<{ role: UserRole }>(
+            "SELECT role FROM users WHERE id = ?",
+            [userId]
+        );
+        return users[0]?.role === 'admin';
+    }
+
+    /**
+     * Update user active status
+     */
+    async updateActiveStatus(userId: number, isActive: boolean): Promise<User | null> {
+        const pool = getPool();
+        await pool.execute(
+            "UPDATE users SET is_active = ? WHERE id = ?",
+            [isActive ? 1 : 0, userId]
+        );
+        return await this.findById(userId);
+    }
+
+    /**
+     * Check if user is active
+     */
+    async isActive(userId: number): Promise<boolean> {
+        const users = await query<{ is_active: number }>(
+            "SELECT is_active FROM users WHERE id = ?",
+            [userId]
+        );
+        return users[0]?.is_active === 1;
     }
 }
 

@@ -1,8 +1,5 @@
 version: "3.8"
 
-# Development environment configuration for dev branch
-# Maps to port 3000 for development and testing
-
 services:
   db:
     image: mysql:8.0

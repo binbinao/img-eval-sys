@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { UserRole } from "@/types/database";
 
 interface SidebarProps {
     isAuthenticated: boolean;
+    userRole?: UserRole;
 }
 
-export default function Sidebar({ isAuthenticated }: SidebarProps) {
+export default function Sidebar({ isAuthenticated, userRole }: SidebarProps) {
     const pathname = usePathname();
 
     if (!isAuthenticated) {
@@ -19,10 +21,27 @@ export default function Sidebar({ isAuthenticated }: SidebarProps) {
         { href: "/history", label: "辣评历史", icon: "🌶" },
     ];
 
+    // Admin-only menu items
+    const adminItems = [
+        { href: "/admin/users", label: "用户管理", icon: "👥" },
+    ];
+
     return (
         <aside className="sidebar">
             <nav className="sidebar-nav">
                 {navItems.map((item) => (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`sidebar-item ${pathname === item.href ? "active" : ""}`}
+                    >
+                        <span className="sidebar-icon">{item.icon}</span>
+                        <span className="sidebar-label">{item.label}</span>
+                    </Link>
+                ))}
+                
+                {/* Admin-only menu items (visible only to admins, no section title) */}
+                {userRole === 'admin' && adminItems.map((item) => (
                     <Link
                         key={item.href}
                         href={item.href}
