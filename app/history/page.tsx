@@ -74,7 +74,7 @@ export default function HistoryPage() {
 
     return (
         <div>
-            <h1 style={{ marginBottom: "20px" }}>评估历史</h1>
+            <h1 style={{ marginBottom: "20px" }}>辣评历史</h1>
 
             {evaluations.length === 0 ? (
                 <div className="card">

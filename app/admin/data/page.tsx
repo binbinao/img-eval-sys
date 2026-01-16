@@ -320,22 +320,23 @@ export default function AdminDataPage() {
         };
         
         const btnDownloadStyle: React.CSSProperties = {
-            padding: '6px 12px',
+            padding: '5px 15px',
             background: '#3b82f6',
             color: 'white',
             border: 'none',
-            borderRadius: '6px',
-            fontSize: '12px',
+            borderRadius: '8px',
+            fontSize: '14px',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            fontWeight: 500,
         };
         
         const btnIconStyle: React.CSSProperties = {
-            padding: '6px 10px',
-            background: '#f3f4f6',
-            color: '#333',
-            border: '1px solid #e5e7eb',
-            borderRadius: '6px',
+            padding: '5px 10px',
+            background: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
             fontSize: '14px',
             cursor: 'pointer',
             textDecoration: 'none',
@@ -378,7 +379,7 @@ export default function AdminDataPage() {
                                 }}
                                 disabled={downloadingFolder === node.path}
                             >
-                                {downloadingFolder === node.path ? '⏳' : '⬇️'} 下载
+{downloadingFolder === node.path ? '下载中...' : '下载'}
                             </button>
                         </div>
                     </div>
@@ -403,18 +404,18 @@ export default function AdminDataPage() {
                                 }}
                                 onClick={() => handleDownloadFile(node.path)}
                                 disabled={downloadingFile === node.path}
-                                title="下载"
-                            >
-                                {downloadingFile === node.path ? '⏳' : '⬇️'}
+title="下载"
+                                            >
+                                                {downloadingFile === node.path ? '...' : '下载'}
                             </button>
                             <a
                                 href={node.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={btnIconStyle}
-                                title="预览"
-                            >
-                                👁️
+title="预览"
+                                            >
+                                                预览
                             </a>
                         </div>
                     </div>
@@ -464,7 +465,7 @@ export default function AdminDataPage() {
     return (
         <div className="admin-data-page">
             <div className="page-header">
-                <h1>📊 数据管理</h1>
+                <h1>数据管理</h1>
                 <p className="subtitle">查看和管理COS上的数据文件</p>
             </div>
 

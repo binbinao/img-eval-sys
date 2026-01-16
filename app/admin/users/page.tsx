@@ -171,7 +171,7 @@ export default function AdminUsersPage() {
     return (
         <div className="admin-users-page">
             <div className="page-header">
-                <h1>👥 用户管理</h1>
+                <h1>用户管理</h1>
                 <p className="subtitle">管理系统中的所有用户及其权限</p>
             </div>
 
@@ -206,7 +206,7 @@ export default function AdminUsersPage() {
                                 </td>
                                 <td>
                                     <span className={`role-badge ${user.role}`}>
-                                        {user.role === 'admin' ? '👑 管理员' : '👤 普通用户'}
+                                        {user.role === 'admin' ? '管理员' : '普通用户'}
                                     </span>
                                 </td>
                                 <td>{formatDate(user.created_at)}</td>
@@ -372,19 +372,18 @@ export default function AdminUsersPage() {
                 .role-badge {
                     display: inline-block;
                     padding: 5px 12px;
-                    border-radius: 20px;
-                    font-size: 13px;
+                    border-radius: var(--border-radius);
+                    font-size: 12px;
                     font-weight: 500;
+                    color: white;
                 }
 
                 .role-badge.admin {
-                    background: #fef3c7;
-                    color: #d97706;
+                    background: var(--warning, #f59e0b);
                 }
 
                 .role-badge.user {
-                    background: #e0e7ff;
-                    color: #4f46e5;
+                    background: var(--info, #3b82f6);
                 }
 
                 .role-select {
@@ -408,32 +407,31 @@ export default function AdminUsersPage() {
                 }
 
                 .active-toggle {
-                    padding: 6px 16px;
-                    border-radius: 20px;
+                    padding: 5px 15px;
+                    border-radius: var(--border-radius);
                     border: none;
-                    font-size: 13px;
-                    font-weight: 600;
+                    font-size: 12px;
+                    font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s ease;
                     min-width: 60px;
+                    color: white;
                 }
 
                 .active-toggle.active {
-                    background: #dcfce7;
-                    color: #16a34a;
+                    background: var(--success, #22c55e);
                 }
 
                 .active-toggle.active:hover:not(:disabled) {
-                    background: #bbf7d0;
+                    opacity: 0.9;
                 }
 
                 .active-toggle.inactive {
-                    background: #fee2e2;
-                    color: #dc2626;
+                    background: var(--secondary, #6b7280);
                 }
 
                 .active-toggle.inactive:hover:not(:disabled) {
-                    background: #fecaca;
+                    opacity: 0.9;
                 }
 
                 .active-toggle:disabled {
