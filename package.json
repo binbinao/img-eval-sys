@@ -23,6 +23,8 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-toast": "^1.2.15",
     "@sentry/nextjs": "^10.33.0",
+    "@types/archiver": "^7.0.0",
+    "archiver": "^7.0.1",
     "bcryptjs": "^3.0.3",
     "cos-nodejs-sdk-v5": "^2.15.4",
     "crypto": "^1.0.1",

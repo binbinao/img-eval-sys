@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         if (!user.is_active) {
             logger.warn("Login attempt with disabled account", { userId: user.id, email: user.email });
             return NextResponse.json(
-                { error: "Your account has been disabled. Please contact the administrator." },
+                { error: "你的账号已经被禁用，请联系管理员处理。" },
                 { status: 403 }
             );
         }

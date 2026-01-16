@@ -158,4 +158,50 @@ export class CosStorage implements IStorage {
             );
         });
     }
+
+    /**
+     * List files in a directory
+     * @param prefix Directory prefix to list (e.g., "images/2026/01/")
+     * @returns Array of file information
+     */
+    async listFiles(prefix?: string): Promise<Array<{
+        key: string;
+        size: number;
+        lastModified: Date;
+        url: string;
+    }>> {
+        return new Promise((resolve, reject) => {
+            this.cos.getBucket(
+                {
+                    Bucket: this.bucket,
+                    Region: this.region,
+                    Prefix: prefix || "images/",
+                    MaxKeys: 1000,
+                },
+                (err, data) => {
+                    if (err) {
+                        logger.error(`Error listing files from COS: ${prefix || "images/"}`, err);
+                        reject(err);
+                        return;
+                    }
+
+                    const files = (data.Contents || [])
+                        .filter((item: any) => item.Size > 0) // Filter out directories
+                        .map((item: any) => {
+                            const size = Number(item.Size) || 0;
+                            logger.info(`File: ${item.Key}, Size: ${size} bytes (${size > 0 ? (size / 1024 / 1024).toFixed(2) + ' MB' : '0 bytes'})`);
+                            return {
+                                key: item.Key,
+                                size: size,
+                                lastModified: new Date(item.LastModified),
+                                url: `/api/files/cos/${item.Key}`,
+                            };
+                        });
+
+                    logger.info(`Listed ${files.length} files from COS with prefix: ${prefix || "images/"}`);
+                    resolve(files);
+                }
+            );
+        });
+    }
 }

@@ -92,4 +92,57 @@ export class LocalStorage implements IStorage {
         const fullPath = join(this.baseDir, path);
         return existsSync(fullPath);
     }
+
+    /**
+     * List files in a directory
+     * @param prefix Directory prefix to list
+     * @returns Array of file information
+     */
+    async listFiles(prefix?: string): Promise<Array<{
+        key: string;
+        size: number;
+        lastModified: Date;
+        url: string;
+    }>> {
+        const dirPath = prefix ? join(this.baseDir, prefix) : this.baseDir;
+        const files: Array<{
+            key: string;
+            size: number;
+            lastModified: Date;
+            url: string;
+        }> = [];
+
+        try {
+            if (!existsSync(dirPath)) {
+                return files;
+            }
+
+            const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+            for (const entry of entries) {
+                const fullPath = join(dirPath, entry.name);
+                const relativePath = prefix ? `${prefix}${entry.name}` : entry.name;
+
+                if (entry.isDirectory()) {
+                    // Recursively list files in subdirectories
+                    const subFiles = await this.listFiles(`${relativePath}/`);
+                    files.push(...subFiles);
+                } else if (entry.isFile()) {
+                    const stats = await fs.stat(fullPath);
+                    files.push({
+                        key: relativePath,
+                        size: stats.size,
+                        lastModified: stats.mtime,
+                        url: await this.getUrl(relativePath),
+                    });
+                }
+            }
+
+            logger.info(`Listed ${files.length} files from local storage with prefix: ${prefix || ''}`);
+        } catch (error) {
+            logger.error(`Error listing files from local storage: ${prefix || ''}`, error);
+        }
+
+        return files;
+    }
 }

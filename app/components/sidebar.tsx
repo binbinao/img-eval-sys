@@ -24,6 +24,7 @@ export default function Sidebar({ isAuthenticated, userRole }: SidebarProps) {
     // Admin-only menu items
     const adminItems = [
         { href: "/admin/users", label: "用户管理", icon: "👥" },
+        { href: "/admin/data", label: "数据管理", icon: "📊" },
     ];
 
     return (

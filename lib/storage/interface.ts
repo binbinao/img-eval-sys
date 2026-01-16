@@ -41,4 +41,16 @@ export interface IStorage {
      * @returns True if file exists
      */
     exists(path: string): Promise<boolean>;
+
+    /**
+     * List files in a directory
+     * @param prefix Directory prefix to list
+     * @returns Array of file information
+     */
+    listFiles(prefix?: string): Promise<Array<{
+        key: string;
+        size: number;
+        lastModified: Date;
+        url: string;
+    }>>;
 }
