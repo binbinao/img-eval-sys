@@ -476,29 +476,7 @@ title="预览"
                 </div>
             )}
 
-            <div className="breadcrumb">
-                <button 
-                    className="breadcrumb-item"
-                    onClick={() => {
-                        setCurrentPrefix("images/");
-                        fetchFiles("images/");
-                    }}
-                >
-                    📁 Root
-                </button>
-                {currentPrefix !== "images/" && (
-                    <>
-                        <span className="separator">/</span>
-                        <button 
-                            className="breadcrumb-item back"
-                            onClick={handleBack}
-                        >
-                            ⬅️ Back
-                        </button>
-                    </>
-                )}
-                <span className="current-path">{currentPrefix}</span>
-            </div>
+            {/* Breadcrumb hidden - no path display */}
 
             <div className="stats">
                 <div className="stat-item">
